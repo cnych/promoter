@@ -6,6 +6,49 @@ Promoter 是一个用于 AlertManager 通知的 Webhooks 实现，目前仅支�
 
 目前是将报警数据渲染成图片后上次到 S3 对象存储，所以需要配置一个对象存储（阿里云 OSS 也可以），此外消息通知展示样式支持模板定制，该功能参考自项目 [prometheus-webhook-dingtalk](https://github.dev/timonwong/prometheus-webhook-dingtalk)。
 
+## 模板
+
+默认模板位于 `template/default.tmpl`，可以根据自己需求定制：
+
+```tmpl
+{{ define "__subject" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}{{ end }}
+{{ define "__alertmanagerURL" }}{{ .ExternalURL }}/#/alerts?receiver={{ .Receiver }}{{ end }}
+
+{{ define "default.__text_alert_list" }}{{ range . }}
+### {{ .Annotations.summary }}
+
+**详情:** {{ .Annotations.description }}
+
+{{ range .Images }}
+**条件:** `{{ .Title }}`
+![📈]({{ .Url }})
+{{- end }}
+
+**标签:**
+{{ range .Labels.SortedPairs }}{{ if and (ne (.Name) "severity") (ne (.Name) "summary") }}> - {{ .Name }}: {{ .Value | markdown | html }}
+{{ end }}{{ end }}
+{{ end }}{{ end }}
+
+{{/* Default */}}
+{{ define "default.title" }}{{ template "__subject" . }}{{ end }}
+{{ define "default.content" }}
+{{ if gt (len .Alerts.Firing) 0 -}}
+#### **{{ .Alerts.Firing | len }} 条报警**
+{{ template "default.__text_alert_list" .Alerts.Firing }}
+{{ range .AtMobiles }}@{{ . }}{{ end }}
+{{- end }}
+{{ if gt (len .Alerts.Resolved) 0 -}}
+#### **{{ .Alerts.Resolved | len }} 条报警恢复**
+{{ template "default.__text_alert_list" .Alerts.Resolved }}
+{{ range .AtMobiles }}@{{ . }}{{ end }}
+{{- end }}
+{{- end }}
+
+
+{{/* Following names for compatibility */}}
+{{ define "ding.link.title" }}{{ template "default.title" . }}{{ end }}
+{{ define "ding.link.content" }}{{ template "default.content" . }}{{ end }}
+```
 
 ## 部署
 
