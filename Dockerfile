@@ -29,7 +29,6 @@ RUN go mod download && \
 FROM gcr.io/distroless/static:nonroot as app
 WORKDIR /
 COPY --from=builder /workspace/promoter /
-COPY --from=builder /workspace/config.example.yaml  /etc/promoter/config.yaml
 COPY --from=builder /workspace/template/default.tmpl /templates/default.tmpl
 USER nonroot:nonroot
 
