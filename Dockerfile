@@ -1,4 +1,4 @@
-# Build the manager binary
+# Build the promoter binary
 FROM golang:1.17 as builder
 
 RUN apt-get -y update && apt-get -y install upx
@@ -22,14 +22,14 @@ ENV GOPROXY="https://goproxy.cn"
 # and so that source changes don't invalidate our downloaded layer
 RUN go mod download && \
     go build -a -o promoter main.go && \
-    upx manager promoter
+    upx promoter
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot as app
 WORKDIR /
 COPY --from=builder /workspace/promoter /
-COPY --from=builder /workspace/template/default.tmpl /templates/default.tmpl
+COPY --from=builder /workspace/template/default.tmpl /template/default.tmpl
 USER nonroot:nonroot
 
 ENTRYPOINT ["/promoter"]
