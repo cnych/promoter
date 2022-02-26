@@ -1,0 +1,47 @@
+{{ define "__subject" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}{{ end }}
+{{ define "__alertmanagerURL" }}{{ .ExternalURL }}/#/alerts?receiver={{ .Receiver }}{{ end }}
+
+{{ define "__text_alert_list" }}{{ range . }}
+**Labels**
+{{ range .Labels.SortedPairs }}> - {{ .Name }}: {{ .Value | markdown | html }}
+{{ end }}
+**Annotations**
+{{ range .Annotations.SortedPairs }}> - {{ .Name }}: {{ .Value | markdown | html }}
+{{ end }}
+**Source:** [{{ .GeneratorURL }}]({{ .GeneratorURL }})
+{{ end }}{{ end }}
+
+{{ define "default.__text_alert_list" }}{{ range . }}
+### {{ .Annotations.summary }}
+
+**详情:** {{ .Annotations.description }}
+
+{{ range .Images }}
+**条件:** `{{ .Title }}`
+![📈]({{ .Url }})
+{{- end }}
+
+**标签:**
+{{ range .Labels.SortedPairs }}{{ if and (ne (.Name) "severity") (ne (.Name) "summary") }}> - {{ .Name }}: {{ .Value | markdown | html }}
+{{ end }}{{ end }}
+{{ end }}{{ end }}
+
+{{/* Default */}}
+{{ define "default.title" }}{{ template "__subject" . }}{{ end }}
+{{ define "default.content" }}
+{{ if gt (len .Alerts.Firing) 0 -}}
+#### **{{ .Alerts.Firing | len }} 条报警**
+{{ template "default.__text_alert_list" .Alerts.Firing }}
+{{ range .AtMobiles }}@{{ . }}{{ end }}
+{{- end }}
+{{ if gt (len .Alerts.Resolved) 0 -}}
+#### **{{ .Alerts.Resolved | len }} 条报警恢复**
+{{ template "default.__text_alert_list" .Alerts.Resolved }}
+{{ range .AtMobiles }}@{{ . }}{{ end }}
+{{- end }}
+{{- end }}
+
+
+{{/* Following names for compatibility */}}
+{{ define "ding.link.title" }}{{ template "default.title" . }}{{ end }}
+{{ define "ding.link.content" }}{{ template "default.content" . }}{{ end }}

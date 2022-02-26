@@ -1,0 +1,18 @@
+debug: true
+http_port: 8080
+timeout: 5s
+prometheus_url: http://192.168.31.31:30104
+metric_resolution: 100
+
+s3:
+  access_key: <ak>
+  secret_key: <sk>
+  endpoint: oss-cn-beijing.aliyuncs.com
+  region: cn-beijing
+  bucket: <bucket>
+
+dingtalk:
+  url: https://oapi.dingtalk.com/robot/send?access_token=<token>
+  # secret for signature
+  secret: <SEC>
+
