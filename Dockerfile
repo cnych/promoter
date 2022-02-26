@@ -16,7 +16,7 @@ ENV CGO_ENABLED=0
 ENV GOOS=linux
 ENV GOARCH=amd64
 ENV GO111MODULE=on
-ENV GOPROXY="https://goproxy.cn"
+#ENV GOPROXY="https://goproxy.cn"
 
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer

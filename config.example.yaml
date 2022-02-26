@@ -1,7 +1,7 @@
 debug: true
 http_port: 8080
 timeout: 5s
-prometheus_url: http://192.168.31.31:30104
+prometheus_url: <prometheus_url>
 metric_resolution: 100
 
 s3:

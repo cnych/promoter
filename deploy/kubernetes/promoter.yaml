@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promoter-conf
+  namespace: kube-mon
+data:
+  config.yaml: |
+    debug: true
+    http_port: 8080
+    timeout: 5s
+    prometheus_url: http://192.168.31.31:30104
+    metric_resolution: 100
+
+    s3:
+      access_key: <ak>
+      secret_key: <sk>
+      endpoint: oss-cn-beijing.aliyuncs.com
+      region: cn-beijing
+      bucket: <bucket>
+
+    dingtalk:
+      url: https://oapi.dingtalk.com/robot/send?access_token=<token>
+      secret: <SEC>
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: promoter
+  namespace: kube-mon
+  labels:
+    app: promoter
+spec:
+  selector:
+    matchLabels:
+      app: promoter
+  template:
+    metadata:
+      labels:
+        app: promoter
+    spec:
+      volumes:
+        - name: promotercfg
+          configMap:
+            name: promoter-conf
+      containers:
+        - name: promoter
+          image: cnych/promoter:v0.1.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: GIN_MODE
+              value: release
+          volumeMounts:
+            - mountPath: "/etc/promoter"
+              name: promotercfg
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: promoter
+  namespace: kube-mon
+  labels:
+    app: promoter
+spec:
+  selector:
+    app: promoter
+  ports:
+    - port: 8080
