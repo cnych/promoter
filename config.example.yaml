@@ -1,18 +1,28 @@
-debug: true
-http_port: 8080
-timeout: 5s
-prometheus_url: <prometheus_url>
-metric_resolution: 100
+global:
+  prometheus_url: http://192.168.31.31:30104
+  wechat_api_secret: <secret>
+  wechat_api_corp_id: <secret>
+  dingtalk_api_token: <secret>
+  dingtalk_api_secret: <secret>
 
 s3:
-  access_key: <ak>
-  secret_key: <sk>
+  access_key: <secret>
+  secret_key: <secret>
   endpoint: oss-cn-beijing.aliyuncs.com
   region: cn-beijing
   bucket: <bucket>
 
-dingtalk:
-  url: https://oapi.dingtalk.com/robot/send?access_token=<token>
-  # secret for signature
-  secret: <SEC>
-
+receivers:
+  - name: rcv1
+    wechat_config:
+      agent_id: <agent_id>
+      to_user: "@all"
+      message_type: markdown
+    dingtalk_config:
+      message_type: markdown
+      markdown:
+        title: '{{ template "dingtalk.default.title" . }}',
+        text: '{{ template "dingtalk.default.content" . }}',
+        at:
+          atMobiles: [ "123456" ]
+          isAtAll: false

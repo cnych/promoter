@@ -1,29 +1,23 @@
-// Copyright 2015 Prometheus Team
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-package models
+package notify
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"net/url"
 	"sort"
 	"time"
 
-	"github.com/cnych/promoter/storage"
+	"github.com/cnych/promoter/config"
+	"github.com/cnych/promoter/template"
+	"github.com/cnych/promoter/util"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/common/model"
-	"github.com/spf13/viper"
 )
+
+type Notifier interface {
+	Notify(ctx context.Context, alerts *Data) (bool, error)
+}
 
 // Pair is a key/value string pair.
 type Pair struct {
@@ -109,30 +103,90 @@ func (kv KV) Values() []string {
 // simple things like simple equality checks to fail. Map everything to float64/string.
 type Data struct {
 	Receiver string `json:"receiver"`
-	Status string `json:"status"`
-	Alerts Alerts `json:"alerts"`
+	Status   string `json:"status"`
+	Alerts   Alerts `json:"alerts"`
 
 	GroupLabels       KV `json:"groupLabels"`
 	CommonLabels      KV `json:"commonLabels"`
 	CommonAnnotations KV `json:"commonAnnotations"`
 
 	ExternalURL string `json:"externalURL"`
-	AtMobiles   []string
+}
+
+func (d *Data) MakeAlertImages(logger log.Logger, config *config.Config) error {
+	for i := range d.Alerts {
+		generatorUrl, err := url.Parse(d.Alerts[i].GeneratorURL)
+		if err != nil {
+			return err
+		}
+
+		generatorQuery, err := url.ParseQuery(generatorUrl.RawQuery)
+		if err != nil {
+			return err
+		}
+
+		var alertFormula string
+		for key, param := range generatorQuery {
+			if key == "g0.expr" {
+				alertFormula = param[0]
+				break
+			}
+		}
+
+		plotExpression := GetPlotExpr(logger, alertFormula)
+		queryTime, duration := d.Alerts[i].getPlotTimeRange()
+
+		for _, expr := range plotExpression {
+			plot, err := Plot(
+				logger,
+				expr,
+				queryTime,
+				duration,
+				time.Duration(config.Global.MetricResolution),
+				config.Global.PrometheusURL.String(),
+				d.Alerts[i],
+			)
+			if err != nil {
+				return fmt.Errorf("Plot error: %v\n", err)
+			}
+
+			publicURL, err := util.UploadFile(
+				string(config.S3.AccessKey),
+				string(config.S3.SecretKey),
+				config.S3.Endpoint,
+				config.S3.Bucket,
+				config.S3.Region,
+				plot)
+			if err != nil {
+				return fmt.Errorf("S3 error: %v\n", err)
+			}
+
+			level.Debug(logger).Log("msg", "alert image uploaded", "url", publicURL)
+			d.Alerts[i].Images = append(d.Alerts[i].Images, AlertImage{
+				Url:   publicURL,
+				Title: expr.String(),
+			})
+
+		}
+
+	}
+
+	return nil
 }
 
 // Alert holds one alert for notification templates.
 type Alert struct {
-	Status      string    `json:"status"`
-	Labels      KV        `json:"labels"`
-	Annotations KV        `json:"annotations"`
-	StartsAt    time.Time `json:"startsAt"`
+	Status       string    `json:"status"`
+	Labels       KV        `json:"labels"`
+	Annotations  KV        `json:"annotations"`
+	StartsAt     time.Time `json:"startsAt"`
 	EndsAt       time.Time `json:"endsAt"`
 	GeneratorURL string    `json:"generatorURL"`
 	Fingerprint  string    `json:"fingerprint"`
-	Images []DingImage
+	Images       []AlertImage
 }
 
-func (a Alert) GetPlotTimeRange() (time.Time, time.Duration) {
+func (a Alert) getPlotTimeRange() (time.Time, time.Duration) {
 	var queryTime time.Time
 	var duration time.Duration
 	if a.StartsAt.Second() > a.EndsAt.Second() {
@@ -141,73 +195,11 @@ func (a Alert) GetPlotTimeRange() (time.Time, time.Duration) {
 	} else {
 		queryTime = a.EndsAt
 		duration = queryTime.Sub(a.StartsAt)
-
 		if duration < time.Minute*20 {
 			duration = time.Minute * 20
 		}
 	}
-	log.Printf("Querying Time %v Duration: %v", queryTime, duration)
 	return queryTime, duration
-}
-
-func (a Alert) GeneratePicture() ([]DingImage, error) {
-	generatorUrl, err := url.Parse(a.GeneratorURL)
-	if err != nil {
-		return nil, err
-	}
-
-	generatorQuery, err := url.ParseQuery(generatorUrl.RawQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	var alertFormula string
-	for key, param := range generatorQuery {
-		if key == "g0.expr" {
-			alertFormula = param[0]
-			break
-		}
-	}
-
-	//(node_memory_MemTotal_bytes - (node_memory_MemFree_bytes + node_memory_Buffers_bytes + node_memory_Cached_bytes)) / node_memory_MemTotal_bytes * 100 > 30
-	//((1 - sum(increase(node_cpu_seconds_total{mode="idle"}[1m])) by (instance) / sum(increase(node_cpu_seconds_total[1m])) by (instance) ) * 100) > 5
-
-	plotExpression := GetPlotExpr(alertFormula)
-	queryTime, duration := a.GetPlotTimeRange()
-
-	var images []DingImage
-
-	for _, expr := range plotExpression {
-		plot, err := Plot(
-			expr,
-			queryTime,
-			duration,
-			time.Duration(viper.GetInt64("metric_resolution")),
-			viper.GetString("prometheus_url"),
-			a,
-			)
-		if err != nil {
-			return nil, fmt.Errorf("Plot error: %v\n", err)
-		}
-
-		publicURL, err := storage.UploadFile(
-			viper.GetString("s3.access_key"),
-			viper.GetString("s3.secret_key"),
-			viper.GetString("s3.endpoint"),
-			viper.GetString("s3.bucket"),
-			viper.GetString("s3.region"),
-			plot)
-		if err != nil {
-			return nil, fmt.Errorf("S3 error: %v\n", err)
-		}
-		log.Printf("Graph uploaded, URL: %s", publicURL)
-		images = append(images, DingImage{
-			Url:   publicURL,
-			Title: expr.String(),
-		})
-	}
-
-	return images, nil
 }
 
 // Alerts is a list of Alert objects.
@@ -218,10 +210,6 @@ func (as Alerts) Firing() []Alert {
 	var res []Alert
 	for _, a := range as {
 		if a.Status == string(model.AlertFiring) {
-			images, err := a.GeneratePicture()
-			if err == nil {
-				a.Images = append(a.Images, images...)
-			}
 			res = append(res, a)
 		}
 	}
@@ -233,12 +221,32 @@ func (as Alerts) Resolved() []Alert {
 	var res []Alert
 	for _, a := range as {
 		if a.Status == string(model.AlertResolved) {
-			images, err := a.GeneratePicture()
-			if err == nil {
-				a.Images = append(a.Images, images...)
-			}
 			res = append(res, a)
 		}
 	}
 	return res
+}
+
+// TmplText is using monadic error handling in order to make string templating
+// less verbose. Use with care as the final error checking is easily missed.
+func TmplText(tmpl *template.Template, data *Data, err *error) func(string) string {
+	return func(text string) (s string) {
+		if *err != nil {
+			return
+		}
+		s, *err = tmpl.ExecuteTextString(text, data)
+		return s
+	}
+}
+
+// TmplHTML is using monadic error handling in order to make string templating
+// less verbose. Use with care as the final error checking is easily missed.
+func TmplHTML(tmpl *template.Template, data *Data, err *error) func(string) string {
+	return func(name string) (s string) {
+		if *err != nil {
+			return
+		}
+		s, *err = tmpl.ExecuteHTMLString(name, data)
+		return s
+	}
 }

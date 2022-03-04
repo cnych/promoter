@@ -19,37 +19,18 @@ package template
 import (
 	"net/http"
 	"os"
-	"path"
 
 	"github.com/shurcooL/httpfs/filter"
 	"github.com/shurcooL/httpfs/union"
 )
 
 // Assets contains the project's assets.
-var Assets = func() http.FileSystem {
-	wd, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
-	var assetsPrefix string
-	switch path.Base(wd) {
-	case "promoter":
-		// When running promoter (without built-in assets) from the repo root.
-		assetsPrefix = "./"
-	case "template":
-		// When generating statically compiled-in assets.
-		assetsPrefix = "../"
-	}
-
-	templates := filter.Keep(
-		http.Dir(path.Join(assetsPrefix, "template")),
+var Assets = union.New(map[string]http.FileSystem{
+	"/templates": filter.Keep(
+		http.Dir("../template"),
 		func(path string, fi os.FileInfo) bool {
 			return path == "/" || path == "/default.tmpl"
 		},
-	)
+	),
+})
 
-	return union.New(map[string]http.FileSystem{
-		"/templates": templates,
-	})
-}()

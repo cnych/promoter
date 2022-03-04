@@ -15,17 +15,9 @@ package template
 
 import (
 	"bytes"
-	"strings"
 )
 
-var (
-	defaultFuncs = map[string]interface{}{
-		"toUpper":  strings.ToUpper,
-		"toLower":  strings.ToLower,
-		"markdown": markdownEscapeString,
-	}
-	isMarkdownSpecial [128]bool
-)
+var isMarkdownSpecial [128]bool
 
 func init() {
 	for _, c := range "_*`" {

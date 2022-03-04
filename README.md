@@ -12,42 +12,50 @@ Promoter 是一个用于 AlertManager 通知的 Webhooks 实现，目前仅支�
 
 ```tmpl
 {{ define "__subject" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}{{ end }}
-{{ define "__alertmanagerURL" }}{{ .ExternalURL }}/#/alerts?receiver={{ .Receiver }}{{ end }}
 
 {{ define "default.__text_alert_list" }}{{ range . }}
-### {{ .Annotations.summary }}
-
-**详情:** {{ .Annotations.description }}
+**{{ .Annotations.summary }}**
 
 {{ range .Images }}
-**条件:** `{{ .Title }}`
-![📈]({{ .Url }})
+![click there get alert image]({{ .Url }})
 {{- end }}
 
-**标签:**
+**description:**
+> {{ .Annotations.description }}
+
+**labels:**
 {{ range .Labels.SortedPairs }}{{ if and (ne (.Name) "severity") (ne (.Name) "summary") }}> - {{ .Name }}: {{ .Value | markdown | html }}
 {{ end }}{{ end }}
 {{ end }}{{ end }}
 
-{{/* Default */}}
-{{ define "default.title" }}{{ template "__subject" . }}{{ end }}
-{{ define "default.content" }}
+{{ define "dingtalk.default.title" }}{{ template "__subject" . }}{{ end }}
+{{ define "dingtalk.default.content" }}
 {{ if gt (len .Alerts.Firing) 0 -}}
-#### **{{ .Alerts.Firing | len }} 条报警**
+### {{ .Alerts.Firing | len }} Alerts Firing:
 {{ template "default.__text_alert_list" .Alerts.Firing }}
 {{ range .AtMobiles }}@{{ . }}{{ end }}
 {{- end }}
 {{ if gt (len .Alerts.Resolved) 0 -}}
-#### **{{ .Alerts.Resolved | len }} 条报警恢复**
+### **{{ .Alerts.Resolved | len }} Alerts Resolved:**
 {{ template "default.__text_alert_list" .Alerts.Resolved }}
 {{ range .AtMobiles }}@{{ . }}{{ end }}
 {{- end }}
 {{- end }}
 
-
-{{/* Following names for compatibility */}}
-{{ define "ding.link.title" }}{{ template "default.title" . }}{{ end }}
-{{ define "ding.link.content" }}{{ template "default.content" . }}{{ end }}
+{{ define "wechat.default.message" }}
+{{ if gt (len .Alerts.Firing) 0 -}}
+### {{ .Alerts.Firing | len }} Alerts Firing:
+> {{ template "default.__text_alert_list" .Alerts.Firing }}
+{{- end }}
+{{ if gt (len .Alerts.Resolved) 0 -}}
+### **{{ .Alerts.Resolved | len }} Alerts Resolved:**
+{{ template "default.__text_alert_list" .Alerts.Resolved }}
+{{- end }}
+{{- end }}
+{{ define "wechat.default.to_user" }}{{ end }}
+{{ define "wechat.default.to_party" }}{{ end }}
+{{ define "wechat.default.to_tag" }}{{ end }}
+{{ define "wechat.default.agent_id" }}{{ end }}
 ```
 
 ## 部署

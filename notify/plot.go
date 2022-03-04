@@ -1,15 +1,16 @@
-package models
+package notify
 
 import (
 	"context"
 	"fmt"
 	"image/color"
 	"io"
-	"log"
 	"regexp"
 	"strconv"
 	"time"
 
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	prometheus "github.com/prometheus/client_golang/api"
 	prometheusApi "github.com/prometheus/client_golang/api/prometheus/v1"
 	promModel "github.com/prometheus/common/model"
@@ -21,7 +22,7 @@ import (
 	"gonum.org/v1/plot/vg/draw"
 )
 
-type DingImage struct {
+type AlertImage struct {
 	Url   string `json:"url"`
 	Title string `json:"title"`
 }
@@ -39,11 +40,11 @@ func (expr PlotExpr) String() string {
 // Only show important part of metric name
 var labelText = regexp.MustCompile("{(.*)}")
 
-func GetPlotExpr(alertFormula string) []PlotExpr {
+func GetPlotExpr(logger log.Logger, alertFormula string) []PlotExpr {
 	expr, _ := promql.ParseExpr(alertFormula)
 	if parenExpr, ok := expr.(*promql.ParenExpr); ok {
 		expr = parenExpr.Expr
-		log.Printf("Removing redundant brackets: %v", expr.String())
+		level.Debug(logger).Log("msg", "Removing redundant brackets", "expr", expr.String())
 	}
 
 	if binaryExpr, ok := expr.(*promql.BinaryExpr); ok {
@@ -51,14 +52,14 @@ func GetPlotExpr(alertFormula string) []PlotExpr {
 
 		switch binaryExpr.Op {
 		case promql.ItemLAND:
-			log.Printf("Logical condition, drawing sides separately")
-			return append(GetPlotExpr(binaryExpr.LHS.String()), GetPlotExpr(binaryExpr.RHS.String())...)
+			level.Debug(logger).Log("msg", "Logical condition, drawing sides separately")
+			return append(GetPlotExpr(logger, binaryExpr.LHS.String()), GetPlotExpr(logger, binaryExpr.RHS.String())...)
 		case promql.ItemLTE, promql.ItemLSS:
 			alertOperator = "<"
 		case promql.ItemGTE, promql.ItemGTR:
 			alertOperator = ">"
 		default:
-			log.Printf("Unexpected operator: %v", binaryExpr.Op.String())
+			level.Debug(logger).Log("msg", "Unexpected operator", "Op", binaryExpr.Op.String())
 			alertOperator = ">"
 		}
 
@@ -69,13 +70,13 @@ func GetPlotExpr(alertFormula string) []PlotExpr {
 			Level:    alertLevel,
 		}}
 	} else {
-		log.Printf("Non binary excpression: %v", alertFormula)
+		level.Debug(logger).Log("msg", "Non binary expression", "expr", alertFormula)
 		return nil
 	}
 }
 
-func Plot(expr PlotExpr, queryTime time.Time, duration, resolution time.Duration, prometheusUrl string, alert Alert) (io.WriterTo, error) {
-	log.Printf("Querying Prometheus %s", expr.Formula)
+func Plot(logger log.Logger, expr PlotExpr, queryTime time.Time, duration, resolution time.Duration, prometheusUrl string, alert Alert) (io.WriterTo, error) {
+	level.Debug(logger).Log("msg", "Querying Prometheus", "expr", expr.Formula)
 	metrics, err := Metrics(
 		prometheusUrl,
 		expr.Formula,
@@ -90,7 +91,6 @@ func Plot(expr PlotExpr, queryTime time.Time, duration, resolution time.Duration
 	var selectedMetrics promModel.Matrix
 	var founded bool
 	for _, metric := range metrics {
-		log.Printf("Metric fetched: %v", metric.Metric)
 		founded = false
 		for label, value := range metric.Metric {
 			if originValue, ok := alert.Labels[string(label)]; ok {
@@ -104,18 +104,19 @@ func Plot(expr PlotExpr, queryTime time.Time, duration, resolution time.Duration
 		}
 
 		if founded {
-			log.Printf("Best match founded: %v", metric.Metric)
+			level.Debug(logger).Log("msg", "Best match founded", "metric", metric.Metric)
 			selectedMetrics = promModel.Matrix{metric}
 			break
 		}
 	}
 
 	if !founded {
-		log.Printf("Best match not founded, use entire dataset. Labels to search: %v", alert.Labels)
+		level.Debug(logger).Log("msg", "Best match not founded, use entire dataset. Labels to search", "labels", alert.Labels.Values())
 		selectedMetrics = metrics
 	}
 
-	log.Printf("Creating plot: %s", alert.Annotations["summary"])
+	level.Debug(logger).Log("msg", "Creating plot", "summary", alert.Annotations["summary"])
+
 	plottedMetric, err := PlotMetric(selectedMetrics, expr.Level, expr.Operator)
 	if err != nil {
 		return nil, err
@@ -264,7 +265,6 @@ func drawLine(data plotter.XYs, colors []color.Color, s int, paletteSize int, p 
 
 	return l, nil
 }
-
 
 func Metrics(server, query string, queryTime time.Time, duration, step time.Duration) (promModel.Matrix, error) {
 	client, err := prometheus.NewClient(prometheus.Config{Address: server})

@@ -1,4 +1,4 @@
-package storage
+package util
 
 import (
 	"bytes"
@@ -21,9 +21,9 @@ func UploadFile(accessKey, secretKey, endpoint, bucket, region string, plot io.W
 	s := session.Must(session.NewSessionWithOptions(session.Options{
 		Config: aws.Config{
 
-			Endpoint: aws.String(endpoint),
-			Region:  aws.String(region),
-			DisableSSL: aws.Bool(true),
+			Endpoint:    aws.String(endpoint),
+			Region:      aws.String(region),
+			DisableSSL:  aws.Bool(true),
 			Credentials: credentials.NewStaticCredentials(accessKey, secretKey, ""),
 		},
 	}))
@@ -74,4 +74,3 @@ func UploadFile(accessKey, secretKey, endpoint, bucket, region string, plot io.W
 	//return fmt.Sprintf("https://%s.s3-%s.amazonaws.com/%s", bucket, region, tempFileName), err
 	return fmt.Sprintf("http://%s.%s/%s", bucket, endpoint, tempFileName), err
 }
-
