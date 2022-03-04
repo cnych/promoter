@@ -18,6 +18,7 @@ receivers:
       agent_id: <agent_id>
       to_user: "@all"
       message_type: markdown
+      message: '{{ template "wechat.default.message" . }}'
     dingtalk_config:
       message_type: markdown
       markdown:
