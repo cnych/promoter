@@ -1,3 +1,4 @@
+---
 global:
   prometheus_url: http://192.168.31.31:30104
   wechat_api_secret: <secret>
@@ -22,8 +23,8 @@ receivers:
     dingtalk_config:
       message_type: markdown
       markdown:
-        title: '{{ template "dingtalk.default.title" . }}',
-        text: '{{ template "dingtalk.default.content" . }}',
+        title: '{{ template "dingtalk.default.title" . }}'
+        text: '{{ template "dingtalk.default.content" . }}'
         at:
           atMobiles: [ "123456" ]
           isAtAll: false

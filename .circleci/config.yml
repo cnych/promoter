@@ -6,7 +6,8 @@ orbs:
 
 executors:
   golang:
-    # Whenever the Go version is updated here, .promu.yml should also be updated.
+    # Whenever the Go version is updated here
+    # .promu.yml should also be updated.
     docker:
       - image: quay.io/prometheus/golang-builder:1.17-base
 
