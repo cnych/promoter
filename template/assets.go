@@ -33,4 +33,3 @@ var Assets = union.New(map[string]http.FileSystem{
 		},
 	),
 })
-

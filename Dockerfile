@@ -1,36 +1,17 @@
-# Build the promoter binary
-FROM golang:1.17 as builder
+ARG ARCH="amd64"
+ARG OS="linux"
+FROM quay.io/prometheus/busybox-${OS}-${ARCH}:latest
+LABEL maintainer="cnych <www.qikqiak.com>"
 
-RUN apt-get -y update && apt-get -y install upx
+ARG ARCH="amd64"
+ARG OS="linux"
+COPY .build/${OS}-${ARCH}/promoter /bin/promoter
+COPY config.example.yaml      /etc/promoter/config.yaml
+COPY template/default.tmpl template/default.tmpl
 
-WORKDIR /workspace
-# Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
+RUN chown -R nobody:nobody etc/promoter
 
-# Copy the go source
-COPY . .
-
-# Build
-ENV CGO_ENABLED=0
-ENV GOOS=linux
-ENV GOARCH=amd64
-ENV GO111MODULE=on
-#ENV GOPROXY="https://goproxy.cn"
-
-# cache deps before building and copying source so that we don't need to re-download as much
-# and so that source changes don't invalidate our downloaded layer
-RUN go mod download && \
-    go build -a -o promoter cmd/promoter/main.go && \
-    upx promoter
-
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot as app
-WORKDIR /
-COPY --from=builder /workspace/promoter /
-COPY --from=builder /workspace/template/default.tmpl /template/default.tmpl
-USER nonroot:nonroot
-
-ENTRYPOINT ["/promoter"]
-
+USER       nobody
+WORKDIR    /promoter
+ENTRYPOINT [ "/bin/promoter" ]
+CMD        [ "--config.file=/etc/promoter/config.yaml" ]

@@ -29,7 +29,6 @@ type API struct {
 }
 
 type ReceiveNotifier struct {
-	name     string
 	receiver *config.Receiver
 	notifier notify.Notifier
 }

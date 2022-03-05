@@ -2,7 +2,6 @@ package v1
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -130,69 +129,13 @@ func (api *API) respond(w http.ResponseWriter, data interface{}) {
 	}
 }
 
-func (api *API) respondError(w http.ResponseWriter, apiErr *apiError, data interface{}) {
-	b, err := json.Marshal(&response{
-		Status:    statusError,
-		ErrorType: apiErr.typ,
-		Error:     apiErr.err.Error(),
-		Data:      data,
-	})
-
-	if err != nil {
-		level.Error(api.logger).Log("msg", "error marshaling json response", "err", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	var code int
-	switch apiErr.typ {
-	case errorBadData:
-		code = http.StatusBadRequest
-	case errorExec:
-		code = 422
-	case errorCanceled, errorTimeout:
-		code = http.StatusServiceUnavailable
-	case errorInternal:
-		code = http.StatusInternalServerError
-	case errorNotFound:
-		code = http.StatusNotFound
-	default:
-		code = http.StatusInternalServerError
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	if n, err := w.Write(b); err != nil {
-		level.Error(api.logger).Log("msg", "error writing response", "bytesWritten", n, "err", err)
-	}
-}
-
 type status string
 
 const (
 	statusSuccess status = "success"
-	statusError   status = "error"
 )
 
 type errorType string
-
-const (
-	errorTimeout  errorType = "timeout"
-	errorCanceled errorType = "canceled"
-	errorExec     errorType = "execution"
-	errorBadData  errorType = "bad_data"
-	errorInternal errorType = "internal"
-	errorNotFound errorType = "not_found"
-)
-
-type apiError struct {
-	typ errorType
-	err error
-}
-
-func (e *apiError) Error() string {
-	return fmt.Sprintf("%s: %s", e.typ, e.err)
-}
 
 type response struct {
 	Status    status      `json:"status"`

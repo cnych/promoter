@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"sync"
 
 	rcvapi "github.com/cnych/promoter/api/receiver"
 	apiv1 "github.com/cnych/promoter/api/v1"
@@ -18,9 +17,6 @@ type Options struct {
 }
 
 type API struct {
-	mtx    sync.RWMutex
-	logger log.Logger
-
 	v1       *apiv1.API
 	receiver *rcvapi.API
 }

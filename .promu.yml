@@ -1,0 +1,29 @@
+repository:
+  path: github.com/cnych/promoter
+go:
+  version: 1.17
+  cgo: false
+build:
+  binaries:
+    - name: promoter
+      path: ./cmd/promoter
+  flags: -a -tags netgo
+  ldflags: |
+    -X github.com/prometheus/common/version.Version={{.Version}}
+    -X github.com/prometheus/common/version.Revision={{.Revision}}
+    -X github.com/prometheus/common/version.Branch={{.Branch}}
+    -X github.com/prometheus/common/version.BuildUser={{user}}@{{host}}
+    -X github.com/prometheus/common/version.BuildDate={{date "20060102-15:04:05"}}
+tarball:
+  files:
+    - LICENSE
+    - config.example.yml
+crossbuild:
+  platforms:
+    - darwin
+    - windows/amd64
+    - windows/arm64
+    - windows/386
+    - linux/amd64
+    - linux/arm
+    - linux/arm64

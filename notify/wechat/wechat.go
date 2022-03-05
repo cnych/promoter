@@ -96,13 +96,13 @@ func (n *Notifier) Notify(ctx context.Context, data *notify.Data) (bool, error) 
 			CardType: "news_notice",
 			MainTitle: weChatMessageTemplateMainTitle{
 				Title: tmpl(n.conf.TemplateCard.Title),
-				Desc: tmpl(n.conf.TemplateCard.Description),
+				Desc:  tmpl(n.conf.TemplateCard.Description),
 			},
 			ImageTextArea: wechatMessageTemplateImage{
-				Type: 1,
-				URL: n.tmpl.ExternalURL.String(),
-				Title: tmpl(n.conf.TemplateCard.Title),
-				Desc: tmpl(n.conf.TemplateCard.Description),
+				Type:     1,
+				URL:      n.tmpl.ExternalURL.String(),
+				Title:    tmpl(n.conf.TemplateCard.Title),
+				Desc:     tmpl(n.conf.TemplateCard.Description),
 				ImageURL: tmpl(n.conf.TemplateCard.ImageURL),
 			},
 		}
@@ -159,16 +159,16 @@ func (n *Notifier) Notify(ctx context.Context, data *notify.Data) (bool, error) 
 }
 
 type weChatMessage struct {
-	Text     weChatMessageContent `json:"text,omitempty"`
-	ToUser   string               `json:"touser,omitempty"`
-	ToParty  string               `json:"toparty,omitempty"`
-	Totag    string               `json:"totag,omitempty"`
-	AgentID  string               `json:"agentid,omitempty"`
-	Safe     string               `json:"safe,omitempty"`
-	Type     string               `json:"msgtype,omitempty"`
-	Markdown weChatMessageContent `json:"markdown,omitempty"`
+	Text         weChatMessageContent      `json:"text,omitempty"`
+	ToUser       string                    `json:"touser,omitempty"`
+	ToParty      string                    `json:"toparty,omitempty"`
+	Totag        string                    `json:"totag,omitempty"`
+	AgentID      string                    `json:"agentid,omitempty"`
+	Safe         string                    `json:"safe,omitempty"`
+	Type         string                    `json:"msgtype,omitempty"`
+	Markdown     weChatMessageContent      `json:"markdown,omitempty"`
 	TemplateCard weChatMessageTemplateCard `json:"template_card,omitempty"`
-	News weChatMessageNews `json:"news,omitempty"`
+	News         weChatMessageNews         `json:"news,omitempty"`
 }
 
 type weChatMessageContent struct {
@@ -179,21 +179,21 @@ type weChatMessageNews struct {
 }
 
 type weChatMessageTemplateCard struct {
-	CardType string `json:"card_type"`
-	MainTitle weChatMessageTemplateMainTitle `json:"main_title"`
-	ImageTextArea wechatMessageTemplateImage `json:"image_text_area"`
+	CardType      string                         `json:"card_type"`
+	MainTitle     weChatMessageTemplateMainTitle `json:"main_title"`
+	ImageTextArea wechatMessageTemplateImage     `json:"image_text_area"`
 }
 
 type weChatMessageTemplateMainTitle struct {
 	Title string `json:"title"`
-	Desc string `json:"desc"`
+	Desc  string `json:"desc"`
 }
 
 type wechatMessageTemplateImage struct {
-	Type int `json:"type"`
-	URL string `json:"url"`
-	Title string `json:"title"`
-	Desc string `json:"desc"`
+	Type     int    `json:"type"`
+	URL      string `json:"url"`
+	Title    string `json:"title"`
+	Desc     string `json:"desc"`
 	ImageURL string `json:"image_url"`
 }
 

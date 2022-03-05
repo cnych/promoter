@@ -53,8 +53,8 @@ func (n *Notifier) Notify(ctx context.Context, data *notify.Data) (bool, error) 
 		}
 	}
 	msg := &dingtalkMessage{
-		Type:       n.conf.MessageType,
-		At:         &at,
+		Type: n.conf.MessageType,
+		At:   &at,
 	}
 	if msg.Type == "markdown" {
 		msg.Markdown = &dingtalkMessageMarkdown{
@@ -126,10 +126,10 @@ type dingtalkResponse struct {
 }
 
 type dingtalkMessage struct {
-	Type       string                     `json:"msgtype,omitempty"`
-	Text       *dingtalkMessageText       `json:"text,omitempty"`
-	Markdown   *dingtalkMessageMarkdown   `json:"markdown,omitempty"`
-	At         *dingtalkMessageAt         `json:"at,omitempty"`
+	Type     string                   `json:"msgtype,omitempty"`
+	Text     *dingtalkMessageText     `json:"text,omitempty"`
+	Markdown *dingtalkMessageMarkdown `json:"markdown,omitempty"`
+	At       *dingtalkMessageAt       `json:"at,omitempty"`
 }
 
 type dingtalkMessageText struct {

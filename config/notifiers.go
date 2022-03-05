@@ -30,22 +30,22 @@ type WechatConfig struct {
 	//NotifierConfig `yaml:",inline" json:",inline"`
 	HTTPConfig *commoncfg.HTTPClientConfig `yaml:"http_config,omitempty" json:"http_config,omitempty"`
 
-	APISecret   Secret `yaml:"api_secret,omitempty" json:"api_secret,omitempty"`
-	CorpID      Secret `yaml:"corp_id,omitempty" json:"corp_id,omitempty"`
-	Message     string `yaml:"message,omitempty" json:"message,omitempty"`
+	APISecret    Secret              `yaml:"api_secret,omitempty" json:"api_secret,omitempty"`
+	CorpID       Secret              `yaml:"corp_id,omitempty" json:"corp_id,omitempty"`
+	Message      string              `yaml:"message,omitempty" json:"message,omitempty"`
 	TemplateCard *WechatTemplateCard `yaml:"template_card,omitempty" json:"template_card,omitempty"`
-	APIURL      *URL   `yaml:"api_url,omitempty" json:"api_url,omitempty"`
-	ToUser      string `yaml:"to_user,omitempty" json:"to_user,omitempty"`
-	ToParty     string `yaml:"to_party,omitempty" json:"to_party,omitempty"`
-	ToTag       string `yaml:"to_tag,omitempty" json:"to_tag,omitempty"`
-	AgentID     string `yaml:"agent_id,omitempty" json:"agent_id,omitempty"`
-	MessageType string `yaml:"message_type,omitempty" json:"message_type,omitempty"`
+	APIURL       *URL                `yaml:"api_url,omitempty" json:"api_url,omitempty"`
+	ToUser       string              `yaml:"to_user,omitempty" json:"to_user,omitempty"`
+	ToParty      string              `yaml:"to_party,omitempty" json:"to_party,omitempty"`
+	ToTag        string              `yaml:"to_tag,omitempty" json:"to_tag,omitempty"`
+	AgentID      string              `yaml:"agent_id,omitempty" json:"agent_id,omitempty"`
+	MessageType  string              `yaml:"message_type,omitempty" json:"message_type,omitempty"`
 }
 
 type WechatTemplateCard struct {
-	Title string `yaml:"title" json:"title"`
+	Title       string `yaml:"title" json:"title"`
 	Description string `yaml:"desc" json:"desc"`
-	ImageURL string `yaml:"image_url" json:"image_url"`
+	ImageURL    string `yaml:"image_url" json:"image_url"`
 }
 
 const wechatValidTypesRe = `^(text|markdown|template_card|news)$`
@@ -78,10 +78,10 @@ type DingtalkConfig struct {
 	APIToken  Secret `yaml:"api_token,omitempty" json:"api_token,omitempty"`
 	APIURL    *URL   `yaml:"api_url,omitempty" json:"api_url,omitempty"`
 
-	Text        *DingtalkText       `yaml:"text,omitempty" json:"text,omitempty"`
-	Markdown    *DingtalkMarkdown   `yaml:"markdown,omitempty" json:"markdown,omitempty"`
-	At          *DingtalkAt         `yaml:"at,omitempty" json:"at,omitempty"`
-	MessageType string              `yaml:"message_type,omitempty" json:"message_type,omitempty"`
+	Text        *DingtalkText     `yaml:"text,omitempty" json:"text,omitempty"`
+	Markdown    *DingtalkMarkdown `yaml:"markdown,omitempty" json:"markdown,omitempty"`
+	At          *DingtalkAt       `yaml:"at,omitempty" json:"at,omitempty"`
+	MessageType string            `yaml:"message_type,omitempty" json:"message_type,omitempty"`
 }
 
 const dingtalkValidTypesRe = `^(text|markdown)$`
@@ -112,7 +112,6 @@ type DingtalkText struct {
 	Content string `yaml:"content" json:"content"`
 }
 
-
 type DingtalkMarkdown struct {
 	Title string `yaml:"title" json:"title"`
 	Text  string `yaml:"text" json:"text"`
@@ -122,4 +121,3 @@ type DingtalkAt struct {
 	AtMobiles []string `yaml:"atMobiles" json:"atMobiles,omitempty"`
 	IsAtAll   bool     `yaml:"isAtAll" json:"isAtAll,omitempty"`
 }
-

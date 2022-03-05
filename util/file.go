@@ -27,7 +27,9 @@ func UploadFile(accessKey, secretKey, endpoint, bucket, region string, plot io.W
 			Credentials: credentials.NewStaticCredentials(accessKey, secretKey, ""),
 		},
 	}))
-	_, err := s.Config.Credentials.Get()
+	if _, err := s.Config.Credentials.Get(); err != nil {
+		return "", err
+	}
 
 	f, err := ioutil.TempFile("", "promoter-*.png")
 	if err != nil {
