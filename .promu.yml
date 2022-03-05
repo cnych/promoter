@@ -18,7 +18,7 @@ build:
 tarball:
   files:
     - LICENSE
-    - config.example.yml
+    - config.example.yaml
 crossbuild:
   platforms:
     - darwin
