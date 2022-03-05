@@ -1,4 +1,4 @@
-# Promoter [![CircleCI](https://circleci.com/gh/cnych/promoter/tree/main.svg?style=shield)][circleci]
+# Promoter ![CircleCI](https://circleci.com/gh/cnych/promoter/tree/main.svg?style=shield)
 
 Promoter 是一个用于 AlertManager 报警通知的 Webhooks 实现，目前支持`钉钉`和`企业微信`，支持在消息通知中展示实时报警图表。
 
