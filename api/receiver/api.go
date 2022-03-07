@@ -97,8 +97,8 @@ func (api *API) Update(conf *config.Config, tmpl *template.Template) {
 	var receiverNotifier = make(map[string][]ReceiveNotifier)
 	for _, rcv := range api.config.Receivers {
 		var receiverNotifiers []ReceiveNotifier
-		if rcv.DingtalkConfig != nil {
-			notifier, err := dingtalk.New(rcv.DingtalkConfig, api.tmpl, api.logger)
+		for _, dtc := range rcv.DingtalkConfigs {
+			notifier, err := dingtalk.New(dtc, api.tmpl, api.logger)
 			if err != nil {
 				level.Error(api.logger).Log("msg", "Init dingtalk notifier", "err", err)
 				continue
@@ -108,8 +108,8 @@ func (api *API) Update(conf *config.Config, tmpl *template.Template) {
 				notifier: notifier,
 			})
 		}
-		if rcv.WechatConfig != nil {
-			notifier, err := wechat.New(rcv.WechatConfig, api.tmpl, api.logger)
+		for _, wcc := range rcv.WechatConfigs {
+			notifier, err := wechat.New(wcc, api.tmpl, api.logger)
 			if err != nil {
 				level.Error(api.logger).Log("msg", "Init wechat notifier", "err", err)
 				continue

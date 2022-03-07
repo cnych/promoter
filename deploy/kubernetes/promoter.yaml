@@ -22,19 +22,19 @@ data:
 
     receivers:
       - name: rcv1
-        wechat_config:
-          agent_id: <agent_id>
-          to_user: "@all"
-          message_type: markdown
-          message: '{{ template "wechat.default.message" . }}'
-        dingtalk_config:
-          message_type: markdown
-          markdown:
-            title: '{{ template "dingtalk.default.title" . }}',
-            text: '{{ template "dingtalk.default.content" . }}',
-            at:
-              atMobiles: [ "123456" ]
-              isAtAll: false
+        wechat_configs:
+          - agent_id: <agent_id>
+            to_user: "@all"
+            message_type: markdown
+            message: '{{ template "wechat.default.message" . }}'
+        dingtalk_configs:
+          - message_type: markdown
+            markdown:
+              title: '{{ template "dingtalk.default.title" . }}',
+              text: '{{ template "dingtalk.default.content" . }}',
+              at:
+                atMobiles: [ "123456" ]
+                isAtAll: false
 
 ---
 apiVersion: apps/v1
