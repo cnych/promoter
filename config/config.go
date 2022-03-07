@@ -205,11 +205,11 @@ func resolveFilepaths(baseDir string, cfg *Config) {
 
 	cfg.Global.HTTPConfig.SetDirectory(baseDir)
 	for _, receiver := range cfg.Receivers {
-		if receiver.WechatConfig != nil {
-			receiver.WechatConfig.HTTPConfig.SetDirectory(baseDir)
+		for _, cfg := range receiver.WechatConfigs {
+			cfg.HTTPConfig.SetDirectory(baseDir)
 		}
-		if receiver.DingtalkConfig != nil {
-			receiver.DingtalkConfig.HTTPConfig.SetDirectory(baseDir)
+		for _, cfg := range receiver.DingtalkConfigs {
+			cfg.HTTPConfig.SetDirectory(baseDir)
 		}
 	}
 }
@@ -273,54 +273,53 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			return fmt.Errorf("notification config name %q is not unique", rcv.Name)
 		}
 		// 循环 wechat 配置
-		if rcv.WechatConfig != nil {
-			if rcv.WechatConfig.HTTPConfig == nil {
-				rcv.WechatConfig.HTTPConfig = c.Global.HTTPConfig
+		for _, wcc := range rcv.WechatConfigs {
+			if wcc.HTTPConfig == nil {
+				wcc.HTTPConfig = c.Global.HTTPConfig
 			}
-			if rcv.WechatConfig.APIURL == nil {
+			if wcc.APIURL == nil {
 				if c.Global.WeChatAPIURL == nil {
 					return fmt.Errorf("no global Wechat URL set")
 				}
-				rcv.WechatConfig.APIURL = c.Global.WeChatAPIURL
+				wcc.APIURL = c.Global.WeChatAPIURL
 			}
-			if rcv.WechatConfig.APISecret == "" {
+			if wcc.APISecret == "" {
 				if c.Global.WeChatAPISecret == "" {
 					return fmt.Errorf("no global Wechat ApiSecret set")
 				}
-				rcv.WechatConfig.APISecret = c.Global.WeChatAPISecret
+				wcc.APISecret = c.Global.WeChatAPISecret
 			}
-			if rcv.WechatConfig.CorpID == "" {
+			if wcc.CorpID == "" {
 				if c.Global.WeChatAPICorpID == "" {
 					return fmt.Errorf("no global Wechat CorpID set")
 				}
-				rcv.WechatConfig.CorpID = c.Global.WeChatAPICorpID
+				wcc.CorpID = c.Global.WeChatAPICorpID
 			}
-			if !strings.HasSuffix(rcv.WechatConfig.APIURL.Path, "/") {
-				rcv.WechatConfig.APIURL.Path += "/"
+			if !strings.HasSuffix(wcc.APIURL.Path, "/") {
+				wcc.APIURL.Path += "/"
 			}
 		}
-
-		if rcv.DingtalkConfig != nil {
-			if rcv.DingtalkConfig.HTTPConfig == nil {
-				rcv.DingtalkConfig.HTTPConfig = c.Global.HTTPConfig
+		for _, dtc := range rcv.DingtalkConfigs {
+			if dtc.HTTPConfig == nil {
+				dtc.HTTPConfig = c.Global.HTTPConfig
 			}
-			if rcv.DingtalkConfig.APIURL == nil {
+			if dtc.APIURL == nil {
 				if c.Global.DingTalkAPIURL == nil {
 					return fmt.Errorf("no global Dingtalk URL set")
 				}
-				rcv.DingtalkConfig.APIURL = c.Global.DingTalkAPIURL
+				dtc.APIURL = c.Global.DingTalkAPIURL
 			}
-			if rcv.DingtalkConfig.APISecret == "" {
+			if dtc.APISecret == "" {
 				if c.Global.DingTalkAPISecret == "" {
 					return fmt.Errorf("no global Dingtalk ApiSecret set")
 				}
-				rcv.DingtalkConfig.APISecret = c.Global.DingTalkAPISecret
+				dtc.APISecret = c.Global.DingTalkAPISecret
 			}
-			if rcv.DingtalkConfig.APIToken == "" {
+			if dtc.APIToken == "" {
 				if c.Global.DingTalkAPIToken == "" {
 					return fmt.Errorf("no global Dingtalk ApiToken set")
 				}
-				rcv.DingtalkConfig.APIToken = c.Global.DingTalkAPIToken
+				dtc.APIToken = c.Global.DingTalkAPIToken
 			}
 		}
 
@@ -461,8 +460,8 @@ type Receiver struct {
 	Name string `yaml:"name" json:"name"`
 
 	//EmailConfigs     []*EmailConfig     `yaml:"email_configs,omitempty" json:"email_configs,omitempty"`
-	WechatConfig   *WechatConfig   `yaml:"wechat_config,omitempty" json:"wechat_config,omitempty"`
-	DingtalkConfig *DingtalkConfig `yaml:"dingtalk_config,omitempty" json:"dingtalk_config,omitempty"`
+	WechatConfigs   []*WechatConfig   `yaml:"wechat_configs,omitempty" json:"wechat_configs,omitempty"`
+	DingtalkConfigs []*DingtalkConfig `yaml:"dingtalk_configs,omitempty" json:"dingtalk_configs,omitempty"`
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for Receiver.
