@@ -7,7 +7,7 @@ metadata:
 data:
   config.yaml: |
     global:
-      prometheus_url: http://192.168.31.31:30104
+      prometheus_url: http://<prometheus_url>
       wechat_api_secret: <secret>
       wechat_api_corp_id: <secret>
       dingtalk_api_token: <secret>
@@ -29,13 +29,12 @@ data:
             message: '{{ template "wechat.default.message" . }}'
         dingtalk_configs:
           - message_type: markdown
+            at:
+              atMobiles: [ "123456" ]
+              isAtAll: false
             markdown:
-              title: '{{ template "dingtalk.default.title" . }}',
-              text: '{{ template "dingtalk.default.content" . }}',
-              at:
-                atMobiles: [ "123456" ]
-                isAtAll: false
-
+              title: '{{ template "dingtalk.default.title" . }}'
+              text: '{{ template "dingtalk.default.content" . }}'
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -54,12 +53,15 @@ spec:
         app: promoter
     spec:
       volumes:
-        - name: promotercfg
+        - name: config
           configMap:
             name: promoter-conf
+        - name: timezone
+          hostPath:
+            path: /etc/localtime
       containers:
         - name: promoter
-          image: cnych/promoter:v0.1.2
+          image: cnych/promoter:main
           imagePullPolicy: IfNotPresent
           args:
             - "--config.file=/etc/promoter/config.yaml"
@@ -67,7 +69,10 @@ spec:
             - containerPort: 8080
           volumeMounts:
             - mountPath: "/etc/promoter"
-              name: promotercfg
+              name: config
+            - mountPath: /etc/localtime
+              name: timezone
+              readOnly: true
 ---
 apiVersion: v1
 kind: Service

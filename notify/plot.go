@@ -148,7 +148,10 @@ func PlotMetric(metrics promModel.Matrix, level float64, direction string) (io.W
 		YAlign: draw.YBottom,
 	}
 
-	p.X.Tick.Marker = plot.TimeTicks{Format: "15:04:05"}
+	p.X.Tick.Marker = plot.TimeTicks{
+		Time:   plot.UnixTimeIn(time.Local), // use local time
+		Format: "15:04:05",
+	}
 	p.X.Tick.Label.Font = textFont
 	p.Y.Tick.Label.Font = textFont
 	p.Legend.Font = textFont

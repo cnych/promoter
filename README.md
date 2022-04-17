@@ -24,7 +24,7 @@ $ ./promoter --config.file=<your_file>
 Promoter 镜像上传到了 Docker Hub，你可以尝试使用下面的命令来启动服务：
 
 ```shell
-$ docker run --name promoter -d -p 8080:8080 cnych/promoter:v0.2.4
+$ docker run --name promoter -d -p 8080:8080 cnych/promoter:main
 ```
 
 ## 配置
@@ -56,11 +56,11 @@ receivers:
     dingtalk_configs:
       - message_type: markdown
         markdown:
-          title: '{{ template "dingtalk.default.title" . }}',
-          text: '{{ template "dingtalk.default.content" . }}',
-          at:
-            atMobiles: [ "123456" ]
-            isAtAll: false
+          title: '{{ template "dingtalk.default.title" . }}'
+          text: '{{ template "dingtalk.default.content" . }}'
+        at:
+          atMobiles: [ "123456" ]
+          isAtAll: false
 ```
 
 在 global 下面可以配置全局属性，比如企业微信或者钉钉的密钥，S3 下面是一个对象存储（阿里云 OSS 也可以）配置，用来保存监控图标生成的图片。
